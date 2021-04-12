@@ -3,6 +3,8 @@ import { isStrongPassword } from "validator";
 import { debounce } from "lodash"
 import axios from 'axios'
 import { toast } from 'react-toastify';
+import { checkIsUserLoggedIn } from '../lib/helpers'
+
 
 import "./SignUp.css";
 export class SignUp extends Component {
@@ -20,6 +22,20 @@ export class SignUp extends Component {
         this.onChangeDebounce = debounce(this.onChangeDebounce, 1000)
     }
 
+    // componentDidMount() {
+    //     if (checkIsUserLoggedIn()) {
+    //         this.props.history.push("/movie-home")
+    //     } else {
+    //         this.props.history.push("/sign-up")
+    //     }
+    // }
+    componentDidMount() {
+        if (checkIsUserLoggedIn()) {
+            this.props.history.push("/movie-home")
+        } else {
+            this.props.history.push('/sign-up')
+        }
+    }
     onChangeDebounce = () => {
         let errorObj = {};
         if (this.state.password !== this.state.confirmPassword) {
@@ -60,7 +76,18 @@ export class SignUp extends Component {
     };
     handleOnSubmit = async (event) => {
         event.preventDefault();
-        let { firstName, lastName, email, password } = this.state;
+        let { firstName, lastName, email, password, isError } = this.state;
+        if(isError) {
+            toast.error("Please fix your password", {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                });
+        }
         try {
             let result = await axios.post("http://localhost:3001/users/sign-up", {
                 firstName,
@@ -196,9 +223,9 @@ export class SignUp extends Component {
                             value={confirmPassword}
                             onChange={this.handleOnPasswordChange}
                         />
-                        <button className="w-100 btn btn-lg btn-primary" type="submit">
+                    <button className="w-100 btn btn-lg btn-primary" type="submit" disabled={isError}> 
                             Sign up
-            </button>
+                        </button>
                     </form>
                 </main>
         ;

@@ -1,11 +1,21 @@
 import React, { Component } from 'react'
 import { toast } from 'react-toastify';
 import axios from 'axios'
+import jwtDecode from 'jwt-decode'
+import { checkIsUserLoggedIn } from '../lib/helpers'
 
 export class Login extends Component {
     state = {
         email: "",
         password: "",
+    }
+
+    componentDidMount() {
+        if (checkIsUserLoggedIn()) {
+            this.props.history.push("/movie-home")
+        } else {
+            this.props.history.push('/login')
+        }
     }
 
     handleOnChangeLogin = (event) => {
@@ -19,37 +29,29 @@ export class Login extends Component {
         let { email, password } = this.state
         try {
             let result = await axios.post("http://localhost:3001/users/login", {
-                email,
-                password,
+                email: email,
+                password: password,
             })
-            console.log(result)
-            if(result.data.message === "Success") {
-            toast.success("Yas!!! you are logged in now", {
-                position: "top-right",
-                autoClose: 5000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
-            });
-        } else {
-            toast.error("Check your email and password", {
-                position: "top-right",
-                autoClose: 5000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
-            });
-        }
+            localStorage.setItem('jwtToken', result.data.jwtToken)
+
+            let decodedJWToken = jwtDecode(result.data.jwtToken)
+            this.props.handleUserLogin(decodedJWToken)
+            this.props.history.push('/movie-home')
         } catch (e) {
-            console.log(e)
+            toast.error(e.response.data, {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+            });
         }
     }
 
     render() {
+        console.log(this.props)
         const { email, password } = this.state
         return (
             <div className="form-body">
